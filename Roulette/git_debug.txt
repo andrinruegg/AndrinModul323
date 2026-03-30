@@ -1,0 +1,40 @@
+On branch main
+Your branch is up to date with 'origin/main'.
+
+Changes not staged for commit:
+  (use "git add/rm <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	deleted:    dist/assets/index-CSDuuoUx.js
+	deleted:    dist/assets/index-Du8jkwI_.css
+	modified:   dist/index.html
+	modified:   src/App.tsx
+	modified:   src/components/atoms/GlobalThemeToggle.tsx
+	modified:   src/components/molecules/MusicPlayer.tsx
+	modified:   src/components/organisms/BettingTable.tsx
+	modified:   src/components/organisms/BlackjackGame.tsx
+	modified:   src/components/organisms/GameControls.tsx
+	modified:   src/components/organisms/RouletteGame.tsx
+	modified:   src/components/organisms/SlotsGame.tsx
+	modified:   src/components/pages/Lobby.tsx
+	modified:   src/hooks/useRoulette.ts
+	modified:   src/index.css
+	modified:   tailwind.config.js
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	README.md
+	build_error.txt
+	dist/assets/index-DMrwdXNb.css
+	dist/assets/index-DZ-Ayw6a.js
+	git_debug.txt
+	src/lib/fpUtils.ts
+	src/lib/rouletteUtils.ts
+
+no changes added to commit (use "git add" and/or "git commit -a")
+commit 4d52feddf041e20060a7e224f9c1114d572c2a41
+Author: andrinruegg <andrin.rueegg@edu.tbz.ch>
+Date:   Mon Mar 30 10:41:11 2026 +0200
+
+    chore: update and populate node_modules dependencies
+origin	https://github.com/andrinruegg/AndrinModul323.git (fetch)
+origin	https://github.com/andrinruegg/AndrinModul323.git (push)

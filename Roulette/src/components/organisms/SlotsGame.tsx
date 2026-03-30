@@ -1,256 +1,250 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, RotateCcw, Play, Coins, Award, Gem, Heart, Spade, Club, Trophy } from 'lucide-react';
-import { useTheme } from '../../context/ThemeContext';
+import { ArrowLeft, RotateCcw, Coins } from 'lucide-react';
 import { useBalance } from '../../context/BalanceContext';
 import confetti from 'canvas-confetti';
 
-// --- Types ---
-interface Symbol {
+// ---- Symbols ----
+interface SlotSymbol {
     id: string;
-    icon: React.ReactNode;
-    color: string;
+    display: string;
     value: number;
     label: string;
+    color: string;
+    glow: string;
 }
 
-const SYMBOLS: Symbol[] = [
-    { id: 'gem', icon: <Gem size={48} />, color: 'text-cyan-400', value: 100, label: 'Diamond' },
-    { id: 'crown', icon: <Award size={48} />, color: 'text-amber-400', value: 50, label: 'Crown' },
-    { id: 'heart', icon: <Heart size={48} />, color: 'text-rose-500', value: 25, label: 'Hearts' },
-    { id: 'spade', icon: <Spade size={48} />, color: 'text-zinc-400', value: 15, label: 'Spades' },
-    { id: 'clubs', icon: <Club size={48} />, color: 'text-emerald-400', value: 10, label: 'Clubs' },
-    { id: 'seven', icon: <div className="text-5xl font-black italic">7</div>, color: 'text-rose-600', value: 200, label: 'Jackpot' },
+const SYMBOLS: SlotSymbol[] = [
+    { id: 'seven',   display: '7',  value: 200, label: 'Jackpot',  color: '#f43f5e', glow: 'rgba(244,63,94,0.6)' },
+    { id: 'diamond', display: '💎', value: 100, label: 'Diamond',  color: '#06b6d4', glow: 'rgba(6,182,212,0.5)' },
+    { id: 'crown',   display: '👑', value: 50,  label: 'Crown',    color: '#f59e0b', glow: 'rgba(245,158,11,0.5)' },
+    { id: 'cherry',  display: '🍒', value: 25,  label: 'Cherry',   color: '#ef4444', glow: 'rgba(239,68,68,0.4)' },
+    { id: 'bar',     display: 'BAR', value: 15, label: 'Bar',      color: '#a78bfa', glow: 'rgba(167,139,250,0.4)' },
+    { id: 'lemon',   display: '🍋', value: 10,  label: 'Lemon',    color: '#fbbf24', glow: 'rgba(251,191,36,0.4)' },
 ];
 
 const REEL_COUNT = 3;
-const SPIN_DURATION_BASE = 2000;
-const REEL_DELAY = 500;
 
 const SlotsGame: React.FC = () => {
     const navigate = useNavigate();
     const { balance, withdraw, deposit } = useBalance();
-    const [reels, setReels] = useState<Symbol[][]>(
+
+    const [reels, setReels] = useState<SlotSymbol[][]>(
         Array(REEL_COUNT).fill(null).map(() => [SYMBOLS[0], SYMBOLS[1], SYMBOLS[2]])
     );
     const [spinningReels, setSpinningReels] = useState<boolean[]>([false, false, false]);
     const [isSpinning, setIsSpinning] = useState(false);
     const [bet, setBet] = useState(100);
-    const [message, setMessage] = useState('Spin to win!');
+    const [message, setMessage] = useState('Good luck!');
     const [winAmount, setWinAmount] = useState(0);
-    const [winningLine, setWinningLine] = useState<number | null>(null); // null, 0 (top), 1 (mid), 2 (bot)
-    const { theme } = useTheme();
+    const [winningLine, setWinningLine] = useState<number | null>(null);
 
     const spin = async () => {
-        if (balance < bet) {
-            setMessage('Insufficient balance!');
-            return;
-        }
-
+        if (balance < bet) { setMessage('Insufficient balance!'); return; }
         setIsSpinning(true);
         setSpinningReels([true, true, true]);
         withdraw(bet);
-        setMessage('Spinning Reels...');
+        setMessage('Spinning…');
         setWinAmount(0);
         setWinningLine(null);
 
-        // Generate final results
-        const newResults: Symbol[][] = [];
-        for (let i = 0; i < REEL_COUNT; i++) {
-            const reelResult: Symbol[] = [];
-            for (let j = 0; j < 3; j++) {
-                reelResult.push(SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)]);
-            }
-            newResults.push(reelResult);
-        }
+        const newResults: SlotSymbol[][] = Array(REEL_COUNT).fill(null).map(() =>
+            Array(3).fill(null).map(() => SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)])
+        );
 
-        // Staggered stop logic
         for (let i = 0; i < REEL_COUNT; i++) {
-            await new Promise(resolve => setTimeout(resolve, SPIN_DURATION_BASE + (i * REEL_DELAY)));
-            setSpinningReels(prev => {
-                const next = [...prev];
-                next[i] = false;
-                return next;
-            });
-            // Update only the reel that stopped
-            setReels(prev => {
-                const next = [...prev];
-                next[i] = newResults[i];
-                return next;
-            });
+            await new Promise(res => setTimeout(res, 2000 + i * 500));
+            setSpinningReels(prev => { const n = [...prev]; n[i] = false; return n; });
+            setReels(prev => { const n = [...prev]; n[i] = newResults[i]; return n; });
         }
 
         setIsSpinning(false);
         checkWin(newResults);
     };
 
-    const checkWin = (results: Symbol[][]) => {
-        // Check rows: 0 (top), 1 (mid), 2 (bot)
+    const checkWin = (results: SlotSymbol[][]) => {
         let totalWin = 0;
-        let linesWon: number[] = [];
-
+        let wonLine: number | null = null;
         for (let row = 0; row < 3; row++) {
             const line = [results[0][row], results[1][row], results[2][row]];
-            const allEqual = line.every(s => s.id === line[0].id);
-
-            if (allEqual) {
-                const payout = line[0].value * (bet / 10);
-                totalWin += payout;
-                linesWon.push(row);
+            if (line.every(s => s.id === line[0].id)) {
+                totalWin += line[0].value * (bet / 10);
+                wonLine = row;
             }
         }
-
         if (totalWin > 0) {
-            deposit(totalWin);
-            setWinAmount(totalWin);
-            setWinningLine(linesWon[0]); // For now just highlight one, or we could support multiple
-            setMessage(`ROYAL WIN! $${totalWin}`);
-            confetti({
-                particleCount: 200,
-                spread: 100,
-                origin: { y: 0.6 },
-                colors: ['#8b5cf6', '#3b82f6', '#06b6d4', '#f59e0b']
-            });
+            deposit(totalWin); setWinAmount(totalWin); setWinningLine(wonLine);
+            setMessage(`Winner! +$${totalWin.toLocaleString()}`);
+            confetti({ particleCount: 220, spread: 100, origin: { y: 0.5 }, colors: ['#ffab0a', '#ffffff', '#f43f5e', '#06b6d4'] });
         } else {
-            // Check for any 2 matches in middle row for small consolation
             const midRow = [results[0][1], results[1][1], results[2][1]];
             const counts: Record<string, number> = {};
             midRow.forEach(s => counts[s.id] = (counts[s.id] || 0) + 1);
-            const hasTwo = Object.values(counts).some(c => c === 2);
-
-            if (hasTwo) {
-                const payout = bet * 0.5;
-                deposit(payout);
-                setWinAmount(payout);
-                setMessage(`Small Win! $${payout}`);
+            if (Object.values(counts).some(c => c === 2)) {
+                const payout = Math.floor(bet * 0.5);
+                deposit(payout); setWinAmount(payout);
+                setMessage(`Near miss! +$${payout}`);
             } else {
-                setMessage('Better Luck Next Time');
+                setMessage('Better luck next time');
             }
         }
     };
 
+    const BET_OPTIONS = [50, 100, 200, 500];
+
     return (
-        <div className={`min-h-screen transition-colors duration-500 font-sans overflow-hidden p-4 md:p-8 relative ${theme === 'dark' ? 'bg-zinc-950 text-white' : 'bg-zinc-50 text-zinc-900'}`}>
-            {/* Background Ambience */}
-            <div className="absolute inset-0 pointer-events-none">
-                <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] blur-[80px] opacity-20 rounded-full ${theme === 'dark' ? 'bg-purple-900/20' : 'bg-purple-200/60'}`} />
-                <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] blur-[60px] opacity-10 rounded-full ${theme === 'dark' ? 'bg-blue-900/20' : 'bg-blue-200/50'}`} />
-            </div>
+        <div
+            className="min-h-screen text-white overflow-hidden relative"
+            style={{ background: 'radial-gradient(ellipse 120% 80% at 50% 0%, #1a0a2e 0%, #0d0616 40%, #08090e 100%)' }}
+        >
+            {/* Ambient glow */}
+            <div className="fixed inset-0 pointer-events-none z-0" style={{ background: 'radial-gradient(ellipse 60% 50% at 50% 40%, rgba(139,92,246,0.06) 0%, transparent 60%)' }} />
+            {/* Top accent */}
+            <div className="fixed top-0 left-0 w-full h-[2px] z-50" style={{ background: 'linear-gradient(90deg, transparent, rgba(139,92,246,0.7), rgba(255,171,10,0.5), rgba(139,92,246,0.7), transparent)' }} />
 
-            <header className="max-w-7xl mx-auto flex items-center justify-between relative z-50 mb-8 md:mb-12 px-4 md:px-0">
-                <button
-                    onClick={() => navigate('/')}
-                    className={`p-3 rounded-2xl transition-all group border ${theme === 'dark'
-                        ? 'bg-white/5 hover:bg-white/10 border-white/10 text-white'
-                        : 'bg-zinc-200/50 hover:bg-zinc-200 border-zinc-200 text-zinc-900 shadow-sm'}`}
-                >
-                    <ArrowLeft className="group-hover:-translate-x-1 transition-transform" />
-                </button>
+            {/* ===== HEADER ===== */}
+            <header
+                className="sticky top-0 z-40 border-b border-white/[0.05]"
+                style={{ background: 'rgba(8,6,22,0.88)', backdropFilter: 'blur(20px)' }}
+            >
+                <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
+                    <button
+                        onClick={() => navigate('/')}
+                        className="p-2.5 rounded-xl transition-all"
+                        style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.5)' }}
+                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'white'; }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.5)'; }}
+                    >
+                        <ArrowLeft size={18} />
+                    </button>
 
-                <div className="flex flex-col items-center">
-                    <h1 className={`text-4xl font-black uppercase italic tracking-tighter bg-clip-text text-transparent bg-gradient-to-r ${theme === 'dark'
-                        ? 'from-purple-400 via-white to-blue-400'
-                        : 'from-purple-600 via-zinc-800 to-blue-600'}`}>
-                        Royal Slots
-                    </h1>
-                    <p className={`text-[10px] font-bold uppercase tracking-[0.4em] opacity-50 ${theme === 'dark' ? 'text-purple-400' : 'text-purple-600'}`}>Noble Fortunes Await</p>
-                </div>
+                    <div className="flex flex-col items-center">
+                        <h1 className="font-display font-bold text-2xl text-white leading-tight">Royal Slots</h1>
+                        <p className="text-[9px] font-semibold uppercase tracking-[0.35em] leading-none" style={{ color: 'rgba(139,92,246,0.7)' }}>Triple Reel · Noble Fortunes</p>
+                    </div>
 
-                <div className="flex items-center gap-4">
-                    <div className={`border px-6 py-3 rounded-2xl flex items-center gap-4 shadow-2xl ${theme === 'dark'
-                        ? 'bg-zinc-900 border-white/20'
-                        : 'bg-white border-zinc-200'}`}>
-                        <div className="w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center text-white">
-                            <Coins size={16} />
+                    <div className="balance-chip">
+                        <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: 'rgba(255,171,10,0.12)' }}>
+                            <Coins size={13} className="text-gold-500" />
                         </div>
-                        <div className="flex flex-col">
-                            <span className="text-[10px] text-zinc-500 font-black uppercase leading-none">Credits</span>
-                            <span className={`text-xl font-black ${theme === 'dark' ? 'text-white' : 'text-zinc-950'}`}>${balance.toLocaleString()}</span>
+                        <div>
+                            <div className="casino-label" style={{ fontSize: '8px' }}>Credits</div>
+                            <div className="text-white font-bold text-base leading-none">${balance.toLocaleString()}</div>
                         </div>
                     </div>
                 </div>
             </header>
 
-            <main className="max-w-5xl mx-auto relative z-10 flex flex-col items-center justify-center pt-8">
-                {/* Slot Machine Cabinet */}
-                <div className={`relative p-2 md:p-4 rounded-[3rem] border-x-[12px] transition-all duration-500 ${theme === 'dark'
-                    ? 'bg-gradient-to-b from-zinc-800 via-zinc-900 to-black border-zinc-800 shadow-[0_0_100px_rgba(139,92,246,0.2)]'
-                    : 'bg-gradient-to-b from-zinc-200 via-zinc-300 to-zinc-400 border-zinc-300 shadow-[0_0_100px_rgba(139,92,246,0.1)]'}`}>
+            {/* ===== MAIN ===== */}
+            <main className="max-w-3xl mx-auto flex flex-col items-center px-6 py-10 relative z-10 gap-8">
 
-                    {/* Machine Header / Logo Area */}
-                    <div className={`absolute -top-12 left-1/2 -translate-x-1/2 border-2 px-8 py-2 rounded-full z-30 shadow-xl ${theme === 'dark'
-                        ? 'bg-zinc-900 border-purple-500/50 shadow-purple-500/20'
-                        : 'bg-white border-purple-400 shadow-purple-200'}`}>
-                        <span className={`text-xl font-black italic tracking-widest flex items-center gap-2 ${theme === 'dark' ? 'text-white' : 'text-zinc-900'}`}>
-                            <Trophy size={20} className="text-purple-500" />
-                            ROYAL
-                            <Trophy size={20} className="text-purple-500" />
-                        </span>
+                {/* Machine Cabinet */}
+                <div
+                    className="w-full rounded-3xl overflow-hidden"
+                    style={{
+                        background: 'linear-gradient(180deg, #1e1530 0%, #120d20 60%, #0a0812 100%)',
+                        border: '2px solid rgba(139,92,246,0.25)',
+                        boxShadow: '0 0 80px rgba(139,92,246,0.15), 0 40px 100px rgba(0,0,0,0.8)',
+                    }}
+                >
+                    {/* Cabinet top bar (LED strip) */}
+                    <div
+                        className="w-full h-1.5"
+                        style={{ background: 'linear-gradient(90deg, #6d28d9, #8b5cf6, #a78bfa, #f59e0b, #a78bfa, #8b5cf6, #6d28d9)', animation: isSpinning ? 'shimmer 1s linear infinite' : 'none' }}
+                    />
+
+                    {/* Cabinet header */}
+                    <div className="px-8 pt-6 pb-4 text-center border-b border-white/[0.05]">
+                        <div className="font-display font-bold text-lg tracking-widest" style={{ color: 'rgba(167,139,250,0.8)' }}>
+                            ♠ ROYAL SLOTS ♠
+                        </div>
                     </div>
 
-                    {/* The Reel Area Container */}
-                    <div className={`relative p-6 md:p-10 rounded-[2.5rem] border-4 inner-shadow-lg overflow-hidden transition-colors duration-500 ${theme === 'dark'
-                        ? 'bg-zinc-950 border-zinc-800'
-                        : 'bg-zinc-100 border-zinc-200'}`}>
-                        {/* Glass Gloss effect */}
-                        <div className="absolute inset-0 bg-gradient-to-tr from-white/10 via-transparent to-white/5 pointer-events-none z-20" />
+                    {/* Reel area */}
+                    <div
+                        className="relative mx-6 my-5 rounded-2xl overflow-hidden p-4 md:p-6"
+                        style={{ background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.05)', boxShadow: 'inset 0 8px 40px rgba(0,0,0,0.6)' }}
+                    >
+                        {/* Paylines */}
+                        {[25, 50, 75].map((top, i) => (
+                            <div
+                                key={i}
+                                className="absolute left-0 right-0 h-px z-20 transition-opacity duration-500"
+                                style={{ top: `${top}%`, background: i === 1 ? 'rgba(255,171,10,0.25)' : 'rgba(255,255,255,0.04)' }}
+                            />
+                        ))}
 
-                        {/* Static Horizontal Paylines (Subtle) */}
-                        <div className={`absolute left-0 right-0 top-1/4 h-[1px] z-10 ${theme === 'dark' ? 'bg-white/5' : 'bg-black/5'}`} />
-                        <div className={`absolute left-0 right-0 top-1/2 h-[1px] z-10 ${theme === 'dark' ? 'bg-white/10' : 'bg-black/10'}`} />
-                        <div className={`absolute left-0 right-0 top-3/4 h-[1px] z-10 ${theme === 'dark' ? 'bg-white/5' : 'bg-black/5'}`} />
-
-                        {/* Winning Line Highlight */}
+                        {/* Winning line highlight */}
                         <AnimatePresence>
                             {winningLine !== null && (
                                 <motion.div
-                                    initial={{ opacity: 0, scaleX: 0 }}
-                                    animate={{ opacity: 1, scaleX: 1 }}
+                                    initial={{ scaleX: 0, opacity: 0 }}
+                                    animate={{ scaleX: 1, opacity: 1 }}
                                     exit={{ opacity: 0 }}
-                                    className="absolute left-0 right-0 h-1 bg-gradient-to-r from-transparent via-purple-500 to-transparent z-30 shadow-[0_0_20px_rgba(168,85,247,0.8)]"
-                                    style={{ top: `${(winningLine * 33.33) + 16.66}%` }}
+                                    className="absolute left-0 right-0 h-1 rounded-full z-30"
+                                    style={{
+                                        top: `${(winningLine * 33.33) + 16.66}%`,
+                                        background: 'linear-gradient(90deg, transparent, #8b5cf6, #f59e0b, #8b5cf6, transparent)',
+                                        boxShadow: '0 0 20px rgba(139,92,246,0.8)',
+                                    }}
                                 />
                             )}
                         </AnimatePresence>
 
-                        <div className="flex gap-3 md:gap-6 relative z-10">
-                            {reels.map((reel, i) => (
-                                <div key={i} className={`relative w-28 md:w-40 h-[360px] md:h-[450px] rounded-2xl border overflow-hidden transition-colors ${theme === 'dark'
-                                    ? 'bg-black/40 border-white/5'
-                                    : 'bg-white border-zinc-200 shadow-inner'}`}>
-                                    {/* Vertical shadow gradients for depth */}
-                                    <div className={`absolute inset-0 pointer-events-none z-20 opacity-40 bg-gradient-to-b ${theme === 'dark' ? 'from-black via-transparent to-black' : 'from-zinc-300 via-transparent to-zinc-300'}`} />
+                        <div className="flex gap-3 md:gap-4 relative z-10">
+                            {reels.map((reel, ri) => (
+                                <div
+                                    key={ri}
+                                    className="flex-1 rounded-xl overflow-hidden relative"
+                                    style={{ background: 'rgba(0,0,0,0.6)', border: '1px solid rgba(255,255,255,0.06)', height: '300px' }}
+                                >
+                                    {/* Inner top/bottom shadows for reel depth */}
+                                    <div className="absolute inset-0 pointer-events-none z-20"
+                                        style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, transparent 25%, transparent 75%, rgba(0,0,0,0.7) 100%)' }} />
 
                                     <motion.div
-                                        animate={spinningReels[i] ? {
-                                            y: [-1000, 0],
-                                            opacity: [0.8, 1, 0.8]
-                                        } : { y: 0, opacity: 1, filter: "blur(0px)" }}
+                                        animate={spinningReels[ri]
+                                            ? { y: [-800, 0], opacity: [0.7, 1] }
+                                            : { y: 0, opacity: 1 }}
+                                        transition={spinningReels[ri]
+                                            ? { repeat: Infinity, duration: 0.12, ease: 'linear' }
+                                            : { type: 'spring', stiffness: 250, damping: 22 }}
                                         style={{ willChange: 'transform' }}
-                                        transition={spinningReels[i] ? {
-                                            repeat: Infinity,
-                                            duration: 0.15,
-                                            ease: "linear"
-                                        } : {
-                                            type: 'spring',
-                                            stiffness: 200,
-                                            damping: 20,
-                                            mass: 0.8
-                                        }}
-                                        className="flex flex-col items-center py-4"
+                                        className="flex flex-col items-center"
                                     >
-                                        {/* During spin, we repeat symbols. When stopped, we show the 3 results. */}
-                                        {(spinningReels[i] ? [...SYMBOLS, ...SYMBOLS, ...SYMBOLS] : reel).map((symbol, idx) => (
-                                            <div key={idx} className="h-[120px] md:h-[150px] flex flex-col items-center justify-center shrink-0">
-                                                <div className={`${symbol.color} flex flex-col items-center ${theme === 'dark' ? 'drop-shadow-[0_0_15px_rgba(255,255,255,0.15)]' : 'drop-shadow-[0_5px_10px_rgba(0,0,0,0.1)]'}`}>
-                                                    {symbol.icon}
-                                                    {!spinningReels[i] && (
-                                                        <span className={`text-[10px] font-black uppercase tracking-[0.2em] mt-3 ${theme === 'dark' ? 'text-white/20' : 'text-zinc-500'}`}>
-                                                            {symbol.label}
-                                                        </span>
-                                                    )}
-                                                </div>
+                                        {(spinningReels[ri]
+                                            ? [...SYMBOLS, ...SYMBOLS, ...SYMBOLS]
+                                            : reel
+                                        ).map((sym, idx) => (
+                                            <div
+                                                key={idx}
+                                                className="h-[100px] flex flex-col items-center justify-center shrink-0 w-full"
+                                            >
+                                                {sym.id === 'seven' ? (
+                                                    <div
+                                                        className="text-5xl font-display font-bold italic leading-none"
+                                                        style={{ color: sym.color, textShadow: `0 0 20px ${sym.glow}` }}
+                                                    >
+                                                        7
+                                                    </div>
+                                                ) : sym.id === 'bar' ? (
+                                                    <div
+                                                        className="text-xl font-display font-bold tracking-widest px-3 py-1 rounded-lg"
+                                                        style={{ color: sym.color, background: 'rgba(167,139,250,0.1)', border: '1px solid rgba(167,139,250,0.2)' }}
+                                                    >
+                                                        BAR
+                                                    </div>
+                                                ) : (
+                                                    <div className="text-4xl leading-none" style={{ filter: `drop-shadow(0 0 8px ${sym.glow})` }}>
+                                                        {sym.display}
+                                                    </div>
+                                                )}
+                                                {!spinningReels[ri] && (
+                                                    <div className="text-[8px] font-bold uppercase tracking-widest mt-2" style={{ color: 'rgba(255,255,255,0.2)' }}>
+                                                        {sym.label}
+                                                    </div>
+                                                )}
                                             </div>
                                         ))}
                                     </motion.div>
@@ -259,59 +253,50 @@ const SlotsGame: React.FC = () => {
                         </div>
                     </div>
 
-                    <div className={`w-12 h-12 rounded-full shadow-inner ${theme === 'dark' ? 'bg-zinc-800 border-t-2 border-white/10' : 'bg-zinc-300 border-t-2 border-white/40'}`} />
-                    <div className={`w-12 h-12 rounded-full shadow-inner ${theme === 'dark' ? 'bg-zinc-800 border-t-2 border-white/10' : 'bg-zinc-300 border-t-2 border-white/40'}`} />
-                </div>
-
-                {/* Status Message Display */}
-                <div className="mt-8 h-20 flex flex-col items-center justify-center">
-                    <AnimatePresence mode="wait">
-                        <motion.div
-                            key={message}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -10 }}
-                            className="flex flex-col items-center"
-                        >
-                            <h2 className={`text-4xl md:text-5xl font-black uppercase italic tracking-tighter ${winAmount > 0
-                                ? 'text-amber-500 drop-shadow-[0_0_20px_rgba(251,191,36,0.5)]'
-                                : theme === 'dark' ? 'text-zinc-400' : 'text-zinc-600'}`}>
+                    {/* Status message */}
+                    <div className="h-16 flex flex-col items-center justify-center px-8 pb-2">
+                        <AnimatePresence mode="wait">
+                            <motion.div
+                                key={message}
+                                initial={{ opacity: 0, y: 6 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -6 }}
+                                className="font-display font-bold text-2xl md:text-3xl text-center"
+                                style={{
+                                    color: winAmount > 0 ? '#ffab0a' : 'rgba(255,255,255,0.4)',
+                                    textShadow: winAmount > 0 ? '0 0 40px rgba(255,171,10,0.6)' : 'none',
+                                }}
+                            >
                                 {message}
-                            </h2>
-                            {winAmount > 0 && (
-                                <motion.div
-                                    initial={{ scale: 0 }}
-                                    animate={{ scale: 1.2 }}
-                                    className="text-white font-black text-xl mt-2 px-4 py-1 bg-purple-600 rounded-lg shadow-lg"
-                                >
-                                    + ${winAmount.toLocaleString()}
-                                </motion.div>
-                            )}
-                        </motion.div>
-                    </AnimatePresence>
+                            </motion.div>
+                        </AnimatePresence>
+                    </div>
+
+                    {/* Bottom LED strip */}
+                    <div className="w-full h-1" style={{ background: 'linear-gradient(90deg, #6d28d9, #8b5cf6, #a78bfa, #f59e0b, #a78bfa, #8b5cf6, #6d28d9)', opacity: 0.6 }} />
                 </div>
 
-                {/* Controls Area */}
-                <div className={`mt-8 w-full max-w-4xl grid grid-cols-1 md:grid-cols-3 items-center gap-8 backdrop-blur-2xl p-8 rounded-[3rem] border shadow-2xl relative overflow-hidden transition-all duration-500 ${theme === 'dark'
-                    ? 'bg-zinc-900/60 border-white/10'
-                    : 'bg-white/80 border-zinc-200'}`}>
-                    <div className={`absolute inset-0 pointer-events-none opacity-20 ${theme === 'dark' ? 'bg-gradient-to-br from-purple-500/10 to-transparent' : 'bg-gradient-to-br from-purple-200 to-transparent'}`} />
-
-                    {/* Bet Selection */}
-                    <div className="flex flex-col gap-4">
-                        <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-[0.3em]">Select Offering</span>
-                        <div className="grid grid-cols-2 gap-3">
-                            {[100, 200, 500, 1000].map(val => (
+                {/* Controls panel */}
+                <div
+                    className="w-full rounded-2xl p-6 grid grid-cols-1 md:grid-cols-3 gap-6 items-center"
+                    style={{ background: 'rgba(8,9,14,0.9)', border: '1px solid rgba(139,92,246,0.15)', backdropFilter: 'blur(20px)', boxShadow: '0 8px 40px rgba(0,0,0,0.5)' }}
+                >
+                    {/* Bet selector */}
+                    <div className="flex flex-col gap-3">
+                        <span className="casino-label" style={{ fontSize: '9px' }}>Bet Amount</span>
+                        <div className="grid grid-cols-2 gap-2">
+                            {BET_OPTIONS.map(val => (
                                 <button
                                     key={val}
                                     onClick={() => setBet(val)}
                                     disabled={isSpinning}
-                                    className={`px-4 py-3 rounded-2xl text-sm font-black transition-all border ${bet === val
-                                        ? 'bg-purple-600 border-purple-400 text-white shadow-[0_0_15px_rgba(147,51,234,0.4)]'
-                                        : theme === 'dark'
-                                            ? 'bg-zinc-800/50 border-white/5 text-zinc-500 hover:text-white/80 hover:bg-zinc-800'
-                                            : 'bg-zinc-100 border-zinc-200 text-zinc-500 hover:text-zinc-900 hover:bg-zinc-200'
-                                        }`}
+                                    className="py-2.5 rounded-xl text-sm font-bold transition-all duration-200 disabled:opacity-40"
+                                    style={{
+                                        background: bet === val ? 'rgba(139,92,246,0.2)' : 'rgba(255,255,255,0.04)',
+                                        border: `1px solid ${bet === val ? 'rgba(139,92,246,0.5)' : 'rgba(255,255,255,0.08)'}`,
+                                        color: bet === val ? '#a78bfa' : 'rgba(255,255,255,0.4)',
+                                        boxShadow: bet === val ? '0 0 15px rgba(139,92,246,0.2)' : 'none',
+                                    }}
                                 >
                                     ${val}
                                 </button>
@@ -319,49 +304,62 @@ const SlotsGame: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Spin Button */}
+                    {/* Spin button */}
                     <div className="flex justify-center">
                         <button
                             onClick={spin}
                             disabled={isSpinning}
-                            className={`group relative w-48 h-48 rounded-full transition-all ${isSpinning
-                                ? 'scale-90 opacity-50'
-                                : 'hover:scale-105 active:scale-95'
-                                }`}
+                            className="relative w-36 h-36 rounded-full flex flex-col items-center justify-center font-bold text-base uppercase tracking-widest transition-all duration-300 overflow-hidden"
+                            style={{
+                                background: isSpinning
+                                    ? 'rgba(255,255,255,0.05)'
+                                    : 'linear-gradient(145deg, #8b5cf6, #6d28d9)',
+                                border: isSpinning ? '3px solid rgba(255,255,255,0.08)' : '3px solid rgba(167,139,250,0.5)',
+                                boxShadow: isSpinning ? 'none' : '0 0 50px rgba(139,92,246,0.4), 0 12px 40px rgba(0,0,0,0.6)',
+                                color: isSpinning ? 'rgba(255,255,255,0.2)' : 'white',
+                                transform: isSpinning ? 'scale(0.93)' : 'scale(1)',
+                                cursor: isSpinning ? 'not-allowed' : 'pointer',
+                            }}
+                            onMouseEnter={e => {
+                                if (!isSpinning) {
+                                    (e.currentTarget as HTMLElement).style.transform = 'scale(1.05)';
+                                    (e.currentTarget as HTMLElement).style.boxShadow = '0 0 80px rgba(139,92,246,0.6), 0 16px 60px rgba(0,0,0,0.6)';
+                                }
+                            }}
+                            onMouseLeave={e => {
+                                if (!isSpinning) {
+                                    (e.currentTarget as HTMLElement).style.transform = 'scale(1)';
+                                    (e.currentTarget as HTMLElement).style.boxShadow = '0 0 50px rgba(139,92,246,0.4), 0 12px 40px rgba(0,0,0,0.6)';
+                                }
+                            }}
                         >
-                            {/* Outer Glow */}
-                            <div className={`absolute inset-0 rounded-full blur-2xl transition-opacity ${isSpinning
-                                ? 'bg-zinc-600'
-                                : theme === 'dark' ? 'bg-purple-600/50 opacity-100' : 'bg-purple-400/30 opacity-100'}`} />
-
-                            {/* The Button Itself */}
-                            <div className={`absolute inset-2 rounded-full flex flex-col items-center justify-center border-4 transition-all duration-500 ${isSpinning
-                                ? 'bg-zinc-900 border-zinc-700 text-zinc-600'
-                                : 'bg-gradient-to-b from-purple-500 to-indigo-700 border-purple-400 text-white shadow-xl shadow-purple-900/40'}`}>
-
-                                {isSpinning ? (
-                                    <RotateCcw className="animate-spin mb-2" size={32} />
-                                ) : (
-                                    <Play className="fill-white mb-2" size={32} />
-                                )}
-                                <span className="font-black text-lg uppercase tracking-wider">{isSpinning ? '...' : 'SPIN'}</span>
-                            </div>
-
-                            {/* Tactile Highlight */}
-                            <div className="absolute inset-4 rounded-full bg-gradient-to-tr from-white/20 to-transparent pointer-events-none" />
+                            {/* Gloss */}
+                            <div className="absolute inset-0 rounded-full" style={{ background: 'linear-gradient(to bottom, rgba(255,255,255,0.18) 0%, transparent 55%)' }} />
+                            {isSpinning ? (
+                                <RotateCcw size={28} className="animate-spin mb-1 relative z-10" />
+                            ) : (
+                                <span className="text-3xl mb-1 relative z-10">▶</span>
+                            )}
+                            <span className="relative z-10 text-sm">{isSpinning ? '...' : 'SPIN'}</span>
                         </button>
                     </div>
 
-                    {/* Stats / Info */}
-                    <div className="flex flex-col items-end gap-3 text-right">
-                        <div className="flex flex-col">
-                            <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-[0.3em]">Jackpot Value</span>
-                            <span className="text-2xl font-black text-rose-500 animate-pulse">$25,000</span>
-                        </div>
-                        <div className={`border p-4 rounded-2xl w-full transition-colors ${theme === 'dark' ? 'bg-zinc-800/50 border-white/5' : 'bg-zinc-100 border-zinc-200'}`}>
-                            <span className="block text-[10px] text-zinc-500 font-bold uppercase tracking-[0.2em] mb-1">Win Multiplier</span>
-                            <span className="text-lg font-black text-cyan-500">UP TO 500X</span>
-                        </div>
+                    {/* Pay table */}
+                    <div className="flex flex-col gap-2">
+                        <span className="casino-label" style={{ fontSize: '9px' }}>Pay Table</span>
+                        {SYMBOLS.slice(0, 4).map(sym => (
+                            <div key={sym.id} className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-base" style={{ filter: `drop-shadow(0 0 4px ${sym.glow})` }}>
+                                        {sym.id === 'seven' ? <span style={{ color: sym.color, fontWeight: 900 }}>7</span>
+                                            : sym.id === 'bar' ? <span style={{ color: sym.color, fontSize: '10px', fontWeight: 700 }}>BAR</span>
+                                                : sym.display}
+                                    </span>
+                                    <span className="text-[10px] font-semibold" style={{ color: 'rgba(255,255,255,0.35)' }}>{sym.label}</span>
+                                </div>
+                                <span className="text-[11px] font-bold" style={{ color: sym.color }}>{sym.value}× bet/10</span>
+                            </div>
+                        ))}
                     </div>
                 </div>
             </main>

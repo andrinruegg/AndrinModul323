@@ -8,7 +8,6 @@ import MusicPlayer from './components/molecules/MusicPlayer';
 
 import { ThemeProvider } from './context/ThemeContext';
 import { BalanceProvider } from './context/BalanceContext';
-import GlobalThemeToggle from './components/atoms/GlobalThemeToggle';
 
 const App: React.FC = () => {
     return (
@@ -16,7 +15,6 @@ const App: React.FC = () => {
             <BalanceProvider>
                 <BrowserRouter>
                     <MusicPlayer />
-                    <GlobalThemeToggle />
                     <Routes>
                         <Route path="/" element={<Lobby />} />
                         <Route path="/roulette" element={<RouletteGame />} />

@@ -6,6 +6,11 @@ export default {
     ],
     theme: {
         extend: {
+            fontFamily: {
+                sans: ['Inter', 'system-ui', 'sans-serif'],
+                serif: ['Playfair Display', 'Georgia', 'serif'],
+                display: ['Playfair Display', 'Georgia', 'serif'],
+            },
             colors: {
                 gold: {
                     50: '#fffdf0',
@@ -20,10 +25,19 @@ export default {
                     900: '#7d4303',
                     950: '#472100',
                 },
+                casino: {
+                    bg: '#08090e',
+                    surface: '#0f1320',
+                    panel: '#0c0e16',
+                    border: 'rgba(255,171,10,0.12)',
+                },
             },
             animation: {
-                'spin-slow': 'spin 10s linear infinite',
-                'spin-reverse-slow': 'spin-reverse 8s linear infinite',
+                'spin-slow': 'spin 12s linear infinite',
+                'spin-reverse-slow': 'spin-reverse 10s linear infinite',
+                'pulse-gold': 'pulse-gold 2.5s ease-in-out infinite',
+                'shimmer': 'shimmer 2s infinite',
+                'float': 'float 4s ease-in-out infinite',
             },
             keyframes: {
                 'spin-reverse': {
@@ -31,9 +45,22 @@ export default {
                     to: { transform: 'rotate(0deg)' },
                 },
                 'shimmer': {
+                    '0%': { transform: 'translateX(-100%)' },
                     '100%': { transform: 'translateX(100%)' },
-                }
-            }
+                },
+                'pulse-gold': {
+                    '0%, 100%': { boxShadow: '0 0 20px rgba(255,171,10,0.3)' },
+                    '50%': { boxShadow: '0 0 50px rgba(255,171,10,0.7)' },
+                },
+                'float': {
+                    '0%, 100%': { transform: 'translateY(0px)' },
+                    '50%': { transform: 'translateY(-8px)' },
+                },
+            },
+            boxShadow: {
+                'gold': '0 0 30px rgba(255,171,10,0.4)',
+                'gold-lg': '0 0 60px rgba(255,171,10,0.6)',
+            },
         }
     },
     plugins: [],

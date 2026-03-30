@@ -8,11 +8,14 @@ const GlobalThemeToggle: React.FC = () => {
         <button
             onClick={toggleTheme}
             title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-            className={`fixed top-4 right-4 md:top-8 md:right-8 z-[100] p-4 rounded-2xl transition-all border shadow-2xl backdrop-blur-xl group hover:scale-110 active:scale-95 ${theme === 'dark'
-                ? 'bg-zinc-900/80 hover:bg-zinc-800 border-white/10 text-yellow-400'
-                : 'bg-white/80 hover:bg-zinc-50 border-zinc-200 text-zinc-900 shadow-sm'}`}
+            className="fixed top-4 right-16 md:top-6 md:right-24 z-[100] w-9 h-9 flex items-center justify-center rounded-lg transition-all"
+            style={{
+                background: 'rgba(255,255,255,0.05)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                color: theme === 'dark' ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.6)',
+            }}
         >
-            {theme === 'dark' ? <Sun size={24} className="animate-spin-slow" /> : <Moon size={24} />}
+            {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
         </button>
     );
 };

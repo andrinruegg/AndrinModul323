@@ -1,141 +1,202 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { useTheme } from '../../context/ThemeContext';
 import { useBalance } from '../../context/BalanceContext';
-import { Trophy, Play, Coins } from 'lucide-react';
+import { Coins, ChevronRight } from 'lucide-react';
 
 const Lobby: React.FC = () => {
     const navigate = useNavigate();
-    const { theme } = useTheme();
     const { balance } = useBalance();
 
     const games = [
         {
             id: 'roulette',
             title: 'Royal Roulette',
-            description: 'Experience the elegance of high-stakes play with our premium European Roulette.',
+            subtitle: 'European · 0% Extra Edge',
+            description: 'The iconic spinning wheel. Place your bets on numbers, colors, or groups — and let fortune decide.',
             path: '/roulette',
             image: '/images/roulette.png',
-            tags: ['Elite', 'Live'],
-            color: 'from-gold-400 via-gold-500 to-gold-700'
+            tags: ['Live', 'Hot'],
+            minBet: 10,
+            accentColor: 'from-[#b8450a] to-[#ff6b35]',
+            glowColor: 'rgba(255,107,53,0.25)',
+            borderColor: 'rgba(255,107,53,0.2)',
         },
         {
             id: 'blackjack',
             title: 'Royal Blackjack',
-            description: 'The ultimate card showdown. Strategy meets luxury in our exclusive VIP tables.',
+            subtitle: 'Classic 21 · Vegas Rules',
+            description: 'Beat the dealer to 21 without going bust. Pure strategy, real tension.',
             path: '/blackjack',
-            disabled: false,
             image: '/images/blackjack.png',
-            tags: ['Classic', 'Skills'],
-            color: 'from-emerald-400 via-emerald-500 to-emerald-700'
+            tags: ['Classic', 'Strategy'],
+            minBet: 50,
+            accentColor: 'from-[#0a5c2e] to-[#1db954]',
+            glowColor: 'rgba(29,185,84,0.2)',
+            borderColor: 'rgba(29,185,84,0.18)',
         },
         {
             id: 'slots',
             title: 'Royal Slots',
-            description: 'Classic fortune reels reimagined for the modern connoisseur.',
+            subtitle: 'Triple Reel · Up to 500×',
+            description: 'Spin the reels and chase bonus lines. Jackpots, wilds, and fortune await.',
             path: '/slots',
-            disabled: false,
             image: '/images/slots.png',
-            tags: ['New', 'Elite'],
-            color: 'from-rose-400 via-rose-500 to-rose-700'
+            tags: ['Jackpot', 'Fast'],
+            minBet: 50,
+            accentColor: 'from-[#4a0080] to-[#9b59b6]',
+            glowColor: 'rgba(155,89,182,0.2)',
+            borderColor: 'rgba(155,89,182,0.18)',
         }
     ];
 
     return (
-        <div className={`min-h-screen transition-colors duration-500 font-sans overflow-x-hidden p-4 md:p-8 selection:bg-gold-500/30 ${theme === 'dark' ? 'bg-zinc-950 text-white' : 'bg-zinc-50 text-zinc-900'}`}>
-            {/* Background Ambience */}
-            <div className="fixed inset-0 pointer-events-none opacity-50">
-                <div className={`absolute top-[-10%] left-[-5%] w-[40%] h-[40%] blur-[80px] rounded-full ${theme === 'dark' ? 'bg-gold-900/10' : 'bg-gold-200/40'}`} />
-                <div className={`absolute bottom-[-10%] right-[-5%] w-[40%] h-[40%] blur-[80px] rounded-full ${theme === 'dark' ? 'bg-emerald-900/5' : 'bg-emerald-200/20'}`} />
-            </div>
+        <div className="min-h-screen text-white overflow-x-hidden relative">
+            {/* Background pattern */}
+            <div
+                className="fixed inset-0 pointer-events-none z-0"
+                style={{
+                    backgroundImage: `
+                        radial-gradient(ellipse 90% 60% at 50% -5%, rgba(255,171,10,0.07) 0%, transparent 55%),
+                        radial-gradient(ellipse 50% 40% at 0% 100%, rgba(29,185,84,0.04) 0%, transparent 50%),
+                        radial-gradient(ellipse 50% 40% at 100% 100%, rgba(155,89,182,0.04) 0%, transparent 50%)
+                    `,
+                }}
+            />
+            {/* Subtle grid lines */}
+            <div
+                className="fixed inset-0 pointer-events-none z-0 opacity-[0.025]"
+                style={{
+                    backgroundImage: `linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)`,
+                    backgroundSize: '64px 64px',
+                }}
+            />
 
-            <div className="max-w-7xl mx-auto relative z-10 flex flex-col items-center justify-center min-h-[80vh]">
-                {/* Header */}
-                <header className="w-full flex items-center justify-between mb-16 md:mb-24 px-4 md:px-0">
-                    <div className="flex items-center gap-6 group">
-                        <motion.div
-                            whileHover={{ rotate: 15, scale: 1.1 }}
-                            className="w-16 h-16 bg-gradient-to-br from-gold-300 via-gold-500 to-gold-700 rounded-2xl flex items-center justify-center shadow-[0_15px_40px_rgba(255,171,10,0.4)] border border-white/20 relative overflow-hidden"
+            {/* ===== HEADER / NAV ===== */}
+            <header className="relative z-20 w-full border-b border-white/[0.06]" style={{ background: 'rgba(8,9,14,0.85)', backdropFilter: 'blur(20px)' }}>
+                <div className="max-w-7xl mx-auto px-6 md:px-10 h-16 md:h-20 flex items-center justify-between">
+                    {/* Logo */}
+                    <div className="flex items-center gap-3">
+                        <div
+                            className="w-9 h-9 rounded-xl flex items-center justify-center text-lg font-display font-bold"
+                            style={{ background: 'linear-gradient(135deg, #ffcc3d, #e68a00)', color: '#1a0f00' }}
                         >
-                            <Trophy className="text-zinc-950 relative z-10" size={36} />
-                            <div className="absolute inset-0 bg-white/20 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-                        </motion.div>
+                            ♠
+                        </div>
                         <div>
-                            <h1 className={`text-4xl md:text-6xl font-black tracking-tighter uppercase italic leading-none bg-clip-text text-transparent bg-gradient-to-r ${theme === 'dark' ? 'from-white via-gold-400 to-white' : 'from-zinc-900 via-gold-600 to-zinc-900'}`}>Royal Casino</h1>
-                            <p className="text-[10px] text-gold-500 font-bold tracking-[0.4em] uppercase mt-2 opacity-50 text-center">Excellence in Gaming • 2026</p>
+                            <span className="font-display font-bold text-xl text-white tracking-tight">Royal Casino</span>
+                            <div className="text-[9px] font-semibold uppercase tracking-[0.3em] text-gold-500/50 leading-none mt-0.5">Est. 2026</div>
                         </div>
                     </div>
 
-                    {/* Global Balance Display */}
-                    <div className={`border px-6 py-3 rounded-2xl flex items-center gap-4 shadow-2xl ${theme === 'dark' ? 'bg-zinc-900 border-white/20' : 'bg-white border-zinc-200'}`}>
-                        <div className="w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center text-white">
-                            <Coins size={16} />
+                    {/* Nav items */}
+                    <nav className="hidden md:flex items-center gap-8 text-[11px] font-semibold uppercase tracking-widest text-white/40">
+                        <span className="text-white/80 border-b border-gold-500/60 pb-0.5">Lobby</span>
+                    </nav>
+
+                    {/* Balance */}
+                    <div className="balance-chip">
+                        <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: 'rgba(255,171,10,0.15)' }}>
+                            <Coins size={14} className="text-gold-500" />
                         </div>
-                        <div className="flex flex-col">
-                            <span className="text-[10px] text-zinc-500 font-black uppercase leading-none">Credits</span>
-                            <span className={`text-xl font-black ${theme === 'dark' ? 'text-white' : 'text-zinc-950'}`}>${balance.toLocaleString()}</span>
+                        <div>
+                            <div className="casino-label" style={{ fontSize: '8px' }}>Credits</div>
+                            <div className="text-white font-bold text-base leading-none">${balance.toLocaleString()}</div>
                         </div>
                     </div>
-                </header>
+                </div>
+            </header>
 
-                {/* Game Grid - Centered and focused */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 w-full max-w-6xl">
+            {/* ===== HERO ===== */}
+            <section className="relative z-10 pt-16 pb-10 text-center px-6">
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
+                    <div className="casino-badge inline-block mb-6">🔴 Live Games Available Now</div>
+                    <h1 className="font-display font-bold text-5xl md:text-7xl text-white leading-[1.05] mb-4">
+                        Where Fortune<br />
+                        <span style={{ backgroundImage: 'linear-gradient(135deg, #ffcc3d, #ffab0a, #e68a00)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                            Meets Excellence
+                        </span>
+                    </h1>
+                    <p className="text-white/40 text-lg max-w-xl mx-auto font-light leading-relaxed">
+                        Premium casino games crafted for the discerning player. Choose your game.
+                    </p>
+                </motion.div>
+            </section>
+
+            {/* ===== GAME CARDS ===== */}
+            <section className="relative z-10 max-w-7xl mx-auto px-6 md:px-10 pb-20">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {games.map((game, index) => (
                         <motion.div
                             key={game.id}
-                            initial={{ opacity: 0, y: 30 }}
+                            initial={{ opacity: 0, y: 32 }}
                             animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.1 * index }}
-                            whileHover={game.disabled ? {} : { y: -10 }}
-                            className={`group relative overflow-hidden rounded-[2.5rem] border h-[450px] flex flex-col transition-all duration-500 ${theme === 'dark'
-                                ? 'bg-white/5 border-white/10'
-                                : 'bg-white border-zinc-200 shadow-xl'
-                                } ${game.disabled ? 'opacity-50 grayscale cursor-not-allowed' : 'cursor-pointer'}`}
-                            onClick={() => !game.disabled && navigate(game.path)}
+                            transition={{ delay: 0.1 + index * 0.1, duration: 0.5 }}
+                            whileHover={{ y: -6 }}
+                            onClick={() => navigate(game.path)}
+                            className="group relative cursor-pointer rounded-2xl overflow-hidden"
+                            style={{
+                                background: 'linear-gradient(160deg, #0f1320 0%, #08090e 100%)',
+                                border: `1px solid ${game.borderColor}`,
+                                boxShadow: `0 4px 32px rgba(0,0,0,0.5), 0 0 0 0 ${game.glowColor}`,
+                                transition: 'box-shadow 0.3s ease, transform 0.3s ease',
+                            }}
+                            onMouseEnter={(e) => {
+                                (e.currentTarget as HTMLElement).style.boxShadow = `0 16px 60px rgba(0,0,0,0.6), 0 0 60px ${game.glowColor}`;
+                            }}
+                            onMouseLeave={(e) => {
+                                (e.currentTarget as HTMLElement).style.boxShadow = `0 4px 32px rgba(0,0,0,0.5)`;
+                            }}
                         >
-                            {/* Card Image */}
-                            <div className="relative h-60 overflow-hidden">
+                            {/* Image */}
+                            <div className="relative h-52 overflow-hidden">
                                 <img
                                     src={game.image}
                                     alt={game.title}
-                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                                    style={{ filter: 'brightness(0.8) saturate(1.1)' }}
                                 />
-                                <div className={`absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/20 to-transparent`} />
+                                {/* Bottom fade */}
+                                <div className="absolute inset-0 bg-gradient-to-t from-[#08090e] via-[rgba(8,9,14,0.3)] to-transparent" />
 
-                                <div className="absolute top-6 left-6 flex gap-2">
+                                {/* Tags */}
+                                <div className="absolute top-4 left-4 flex gap-2">
                                     {game.tags.map(tag => (
-                                        <span key={tag} className="px-3 py-1.5 bg-zinc-950/80 backdrop-blur-md rounded-full text-[9px] font-black uppercase tracking-widest text-gold-500 border border-gold-500/20">
-                                            {tag}
-                                        </span>
+                                        <span key={tag} className="casino-badge">{tag}</span>
                                     ))}
                                 </div>
                             </div>
 
-                            {/* Card Content */}
-                            <div className="relative z-10 p-8 flex-1 flex flex-col justify-between">
-                                <div>
-                                    <h3 className={`text-2xl font-black uppercase italic bg-gradient-to-r ${game.color} bg-clip-text text-transparent group-hover:tracking-wider transition-all duration-500`}>
-                                        {game.title}
-                                    </h3>
-                                    <p className="mt-4 text-sm text-zinc-400 font-medium leading-relaxed line-clamp-2">
-                                        {game.description}
-                                    </p>
+                            {/* Content */}
+                            <div className="p-6 pt-4">
+                                <div className="flex items-start justify-between mb-3">
+                                    <div>
+                                        <h3 className="font-display font-bold text-2xl text-white leading-tight">{game.title}</h3>
+                                        <p className="text-[11px] font-semibold uppercase tracking-widest mt-1" style={{ color: 'rgba(255,255,255,0.35)' }}>{game.subtitle}</p>
+                                    </div>
+                                    <div className="text-right shrink-0 ml-3">
+                                        <div className="casino-label" style={{ fontSize: '8px' }}>Min Bet</div>
+                                        <div className="text-gold-500 font-bold text-lg leading-tight">${game.minBet}</div>
+                                    </div>
                                 </div>
 
-                                <div className="flex items-center justify-end mt-6">
-                                    <div className={`p-4 rounded-2xl bg-white/5 group-hover:bg-gold-500 transition-all duration-300 ${game.disabled ? 'hidden' : ''}`}>
-                                        <Play size={20} className="fill-white group-hover:fill-zinc-950 group-hover:text-zinc-950 text-white" />
-                                    </div>
+                                <p className="text-white/40 text-sm leading-relaxed mb-6">{game.description}</p>
+
+                                {/* CTA */}
+                                <div
+                                    className="casino-btn-primary flex items-center justify-center gap-2 w-full py-3.5 rounded-xl text-sm"
+                                >
+                                    <span>Play Now</span>
+                                    <ChevronRight size={15} className="group-hover:translate-x-1 transition-transform" />
                                 </div>
                             </div>
 
-                            {/* Hover Border Glow */}
-                            <div className="absolute inset-0 border-2 border-transparent group-hover:border-gold-500/50 rounded-[2.5rem] transition-colors pointer-events-none" />
+                            {/* Subtle inner top highlight */}
+                            <div className="absolute inset-0 rounded-2xl pointer-events-none" style={{ background: 'linear-gradient(to bottom, rgba(255,255,255,0.025) 0%, transparent 40%)' }} />
                         </motion.div>
                     ))}
                 </div>
-            </div>
+            </section>
         </div>
     );
 };

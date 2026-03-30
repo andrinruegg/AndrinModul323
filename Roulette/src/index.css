@@ -1,48 +1,144 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,600;1,700;1,900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --gold: #ffab0a;
+    --gold-dim: rgba(255, 171, 10, 0.12);
+    --surface: #0f1320;
+    --bg: #08090e;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
-    @apply bg-zinc-950 text-white antialiased;
-    font-family: 'Outfit', sans-serif;
-    background-image: radial-gradient(circle at top center, #1a2f1a 0%, #09090b 100%);
+    @apply antialiased text-white;
+    font-family: 'Inter', system-ui, sans-serif;
+    background-color: #08090e;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -10%, rgba(255,171,10,0.06) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 80% 110%, rgba(34,197,94,0.03) 0%, transparent 50%);
   }
 }
 
-.glass {
-  @apply bg-white/5 backdrop-blur-md border border-white/10;
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+@layer components {
+  /* ---- Surfaces ---- */
+  .casino-surface {
+    @apply rounded-2xl border;
+    background: linear-gradient(135deg, rgba(15,19,32,0.95) 0%, rgba(8,9,14,0.98) 100%);
+    border-color: var(--gold-dim);
+    box-shadow: 0 4px 32px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.03);
+  }
+
+  .casino-panel {
+    @apply rounded-xl;
+    background: rgba(12, 14, 22, 0.85);
+    border: 1px solid rgba(255,171,10,0.1);
+    backdrop-filter: blur(16px);
+    box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+  }
+
+  /* ---- Buttons ---- */
+  .casino-btn-primary {
+    @apply relative overflow-hidden font-bold uppercase tracking-widest transition-all duration-300;
+    background: linear-gradient(135deg, #ffcc3d 0%, #ffab0a 50%, #e68a00 100%);
+    color: #1a0f00;
+    box-shadow: 0 8px 24px rgba(255,171,10,0.35), inset 0 1px 0 rgba(255,255,255,0.25);
+  }
+  .casino-btn-primary:hover {
+    box-shadow: 0 12px 40px rgba(255,171,10,0.55), inset 0 1px 0 rgba(255,255,255,0.3);
+    transform: translateY(-1px);
+  }
+  .casino-btn-primary:active { transform: translateY(0); }
+  .casino-btn-primary::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, rgba(255,255,255,0.15) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  .casino-btn-ghost {
+    @apply font-semibold uppercase tracking-wider transition-all duration-200;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.7);
+  }
+  .casino-btn-ghost:hover {
+    background: rgba(255,255,255,0.08);
+    border-color: rgba(255,255,255,0.18);
+    color: white;
+  }
+
+  /* ---- Badge ---- */
+  .casino-badge {
+    @apply text-[9px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full;
+    background: rgba(255,171,10,0.1);
+    border: 1px solid rgba(255,171,10,0.25);
+    color: #ffab0a;
+  }
+
+  /* ---- Text ---- */
+  .casino-title {
+    font-family: 'Playfair Display', Georgia, serif;
+    @apply font-bold;
+  }
+
+  .casino-label {
+    @apply text-[10px] font-semibold uppercase tracking-[0.25em];
+    color: rgba(255,255,255,0.3);
+  }
+
+  /* ---- Balance chip ---- */
+  .balance-chip {
+    @apply flex items-center gap-3 px-5 py-2.5 rounded-xl;
+    background: rgba(8,9,14,0.9);
+    border: 1px solid rgba(255,171,10,0.2);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.04);
+  }
+
+  /* ---- Glass ---- */
+  .glass {
+    background: rgba(255,255,255,0.04);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+
+  .glass-gold {
+    background: rgba(255,171,10,0.04);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,171,10,0.15);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
 }
 
-.glass-gold {
-  @apply bg-gold-500/5 backdrop-blur-md border border-gold-500/20;
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-}
-
-/* Custom perspective for the table */
-.perspective-table {
-  perspective: 1500px;
-}
-
+/* ---- Perspective table ---- */
+.perspective-table { perspective: 1500px; }
 .rotate-table {
-  transform: rotateX(15deg);
+  transform: rotateX(12deg);
   transform-style: preserve-3d;
 }
 
-::selection {
-  @apply bg-gold-500/30 text-white;
-}
+/* ---- Selection ---- */
+::selection { background: rgba(255,171,10,0.25); color: white; }
 
-/* Custom Scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-}
-
-::-webkit-scrollbar-track {
-  @apply bg-zinc-950;
-}
-
+/* ---- Scrollbar ---- */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #08090e; }
 ::-webkit-scrollbar-thumb {
-  @apply bg-zinc-800 rounded-full border-2 border-zinc-950 hover:bg-zinc-700 transition-colors;
+  background: rgba(255,171,10,0.2);
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(255,171,10,0.4); }
+
+/* ---- Divider ---- */
+.casino-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,171,10,0.2), transparent);
 }
